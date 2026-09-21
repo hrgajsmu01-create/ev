@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HRGA</title>
+  
+  <!-- Material Fonts, Bootstrap 5, FontAwesome, Chart.js, Leaflet, HTML2PDF & QRCode.js -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Library QR Code Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Library SheetJS untuk membaca/menulis file Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      /* ===== KAMUS WARNA STANDAR ===== */
+      --color-orange: #FFA500;
+      --color-biru-dongker: #0a0a5c;
+      --color-biru: #0000ff;
+      --color-hijau-tua: #006600;
+      --color-merah: #ff0500;
+      --color-abu-abu: #c0c0c0;
+
+      /* ===== PALETTE MATERIAL DESIGN ===== */
+      --md-primary: var(--color-biru-dongker);
+      --md-on-primary: #FFFFFF;
+      --md-surface: #FEF7FF;
+      --md-surface-variant: #E7E0EC;
+      --md-on-surface-variant: #49454F;
+      --md-outline: var(--color-abu-abu);
+      --md-background: #F4F5F9;
+      --md-navbar-bg: #e39402;
+      --md-nav-hover: var(--color-biru-dongker);
+    }
+
+    body.md-container {
+      background-color: var(--md-background);
+      font-family: 'Roboto', sans-serif;
+      color: #1C1B1F;
+    }
+    
+    /* ===== NAVBAR (BACKGROUND ORANGE) ===== */
+    .md-navbar {
+      background: var(--md-navbar-bg) !important;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ===== MENU / NAV-LINK ===== */
+    .md-navbar .nav-link {
+      color: #FFFFFF !important;
+      font-weight: 600;
+      border-radius: 20px;
+      padding: 8px 20px;
+      margin-right: 6px;
+      transition: all 0.25s ease-in-out;
+    }
+
+    /* ===== HOVER & ACTIVE (BIRU DONGKER) ===== */
+    .md-navbar .nav-link:hover, 
+.md-navbar {
+      background: #ffffff !important; /* Ubah ke 'transparent !important' jika ingin transparan penuh */
+      box-shadow: 0px 2px 6px rgba(0, 0, 0, 0);
+    
+    }
+.md-navbar .nav-link {
+      color: #1C1B1F !important; /* Warna teks hitam */
+      font-weight: 600;
+      border-radius: 6px; /* Sudut sedikit melengkung (tidak terlalu round) */
+      padding: 8px 16px;
+      margin-right: 6px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* ===== HOVER & ACTIVE (ORANGE, TEKS PUTIH) ===== */
+    .md-navbar .nav-link:hover, 
+    .md-navbar .nav-link.active {
+      background: var(--color-orange) !important; /* Warna hover orange */
+      color: #FFFFFF !important; /* Teks tetap jelas saat hovered/aktif */
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .md-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      border: 1px solid var(--md-outline);
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.04);
+      padding: 24px;
+    }
+
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1px solid var(--md-outline);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--color-biru);
+      box-shadow: 0 0 0 0.25rem rgba(0, 0, 255, 0.15);
+    }
+
+    .md-kpi-card {
+      background: #F3EDF7;
+      border-radius: 16px;
+      padding: 16px;
+      border-left: 6px solid var(--md-primary);
+    }
+
+    .md-card-participant {
+      background: #F7F2FA;
+      border: 1px solid var(--md-surface-variant);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+#evt-map { 
+      flex: 1;
+      width: 100%; 
+      border-radius: 12px; 
+      margin-top: 8px; 
+      border: 1px solid var(--md-outline); 
+      min-height: 500px;
+    }
+    
+    .spin-icon { animation: spin 0.8s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .pdf-capture-fix .form-control,
+    .pdf-capture-fix .form-select {
+      line-height: 2.2 !important;
+      padding-top: 14px !important;
+      padding-bottom: 6px !important;
+    }
+
+    #qrcode img {
+      margin: 0 auto;
+      border: 8px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 12px;
+    }
+
+    /* ===== MD SNACKBAR (pengganti alert()) ===== */
+    .md-snackbar-container {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+    .md-snackbar {
+      pointer-events: auto;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #322F35;
+      color: #F4EFF4;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+      font-size: 0.92rem;
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .md-snackbar.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .md-snackbar.hide {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+    .md-snackbar .md-snackbar-icon {
+      flex: 0 0 auto;
+      width: 22px;
+      text-align: center;
+      font-size: 1.05rem;
+    }
+    .md-snackbar .md-snackbar-msg {
+      flex: 1 1 auto;
+      line-height: 1.35;
+    }
+    .md-snackbar .md-snackbar-close {
+      flex: 0 0 auto;
+      background: none;
+      border: none;
+      color: var(--color-abu-abu);
+      font-size: 0.95rem;
+      padding: 4px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .md-snackbar .md-snackbar-close:hover { color: #fff; }
+
+    /* Penyesuaian Tipe Snackbar Menggunakan Kamus Warna */
+    .md-snackbar.type-error { border-left: 4px solid var(--color-merah); }
+    .md-snackbar.type-error .md-snackbar-icon { color: var(--color-merah); }
+    
+    .md-snackbar.type-success { border-left: 4px solid var(--color-hijau-tua); }
+    .md-snackbar.type-success .md-snackbar-icon { color: var(--color-hijau-tua); }
+    
+    .md-snackbar.type-warning { border-left: 4px solid var(--color-orange); }
+    .md-snackbar.type-warning .md-snackbar-icon { color: var(--color-orange); }
+    
+    .md-snackbar.type-info { border-left: 4px solid var(--color-biru); }
+    .md-snackbar.type-info .md-snackbar-icon { color: var(--color-biru); }
+
+    /* ===== MD CONFIRM DIALOG (pengganti confirm()) ===== */
+    #mdConfirmModal .modal-content {
+      border-radius: 20px;
+      border: none;
+      padding: 8px 4px;
+    }
+    #mdConfirmModal .md-confirm-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 6px auto 4px;
+      font-size: 1.4rem;
+    }
+    #mdConfirmModal .md-confirm-icon.danger { 
+      background: #FFEEEB; 
+      color: var(--color-merah); 
+    }
+    #mdConfirmModal .md-confirm-icon.default { 
+      background: #E8E8F5; 
+      color: var(--md-primary); 
+    }
+    #mdConfirmModal .modal-title { font-weight: 700; }
+    #mdConfirmModal .modal-body p { color: #49454F; }
+</style>
+</head>
+<body class="md-container">
+
+<div id="mdSnackbarContainer" class="md-snackbar-container"></div>
+
+<div class="modal fade" id="mdConfirmModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-2">
+      <div class="modal-body">
+        <div class="md-confirm-icon default" id="mdConfirmIcon"><i class="fa-solid fa-circle-question"></i></div>
+        <h5 class="modal-title mb-2" id="mdConfirmTitle">Konfirmasi</h5>
+        <p class="mb-4" id="mdConfirmMessage">Apakah Anda yakin?</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="mdConfirmCancelBtn">Batal</button>
+          <button type="button" class="btn btn-primary rounded-pill px-4" id="mdConfirmOkBtn">Ya, Lanjutkan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark md-navbar sticky-top">
+  <div class="container-fluid px-1">
+    <a class="navbar-brand fw-bold text-white me-4" href="#"></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#evtNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="evtNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" id="evt-nav-gen" href="#" onclick="EventModule.switchTab('gen')"><i class="fa-solid fa-qrcode me-2"></i>Generate QR</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="evt-nav-add" href="#" onclick="EventModule.switchTab('add')"><i class="fa-solid fa-calendar-plus me-2"></i>Event</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="evt-nav-report" href="#" onclick="EventModule.switchTab('report')"><i class="fa-solid fa-chart-line me-2"></i>Report</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid p-4">
+
+  <!-- TAB 1: GENERATE QR -->
+  <div id="evt-tab-gen">
+    <div id="evt-viewForm" class="md-card">
+      <h5 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-qrcode me-2 text-primary"></i>Generate QR</h5>
+      <form id="evt-qrForm" onsubmit="EventModule.handleGenerateQR(event)">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Kode Event</label>
+            <select id="evt-kodeTraining" class="form-select" onchange="EventModule.autofillData()" required>
+              <option value="">-- Pilih --</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Tanggal</label>
+            <input type="date" id="evt-tanggal" class="form-control" required readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Materi</label>
+            <input type="text" id="evt-materi" class="form-control" required readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Lokasi / Unit</label>
+            <input type="text" id="evt-lokasi" class="form-control" required readonly>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label d-flex justify-content-between align-items-center fw-medium">
+            <span>Maps Coordinates</span>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="EventModule.getCurrentLocation()"><i class="fa-solid fa-location-crosshairs me-1"></i> Lokasi Saat Ini</button>
+          </label>
+          <input type="text" id="evt-gps" class="form-control mb-2" readonly>
+          <div id="evt-map"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary rounded-pill btn-lg w-100 mt-4"><i class="fa-solid fa-qrcode me-2"></i>Generate QR Code</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 2: ADD EVENT -->
+  <div id="evt-tab-add" class="d-none">
+    <div class="md-card mb-4">
+      <h5 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-calendar-plus me-2 text-primary"></i>Tambah Event</h5>
+      <form id="evt-addEventForm" onsubmit="EventModule.handleAddEvent(event)">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Kode Event</label>
+            <div class="input-group">
+              <input type="text" id="evt-add-kode" class="form-control fw-bold text-uppercase" readonly required>
+              <button type="button" class="btn btn-outline-secondary" onclick="EventModule.generateUniqueCode()"><i class="fa-solid fa-rotate"></i></button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Tanggal</label>
+            <input type="date" id="evt-add-tanggal" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Materi / Agenda</label>
+            <input type="text" id="evt-add-materi" class="form-control" placeholder="Contoh: Brevet C" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Unit / Lokasi</label>
+            <input type="text" id="evt-add-unit" class="form-control" placeholder="Contoh: Pertamina" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">PIC / Narasumber</label>
+            <input type="text" id="evt-add-pic" class="form-control" placeholder="Nama PIC / Narasumber" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Metode</label>
+            <select id="evt-add-metode" class="form-select" required>
+              <option value="Onsite">Onsite</option>
+              <option value="Online">Online</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="evt-btnSaveEvent" class="btn btn-primary rounded-pill btn-lg w-100 mt-4">
+          <i class="fa-solid fa-floppy-disk me-2"></i>Simpan
+        </button>
+      </form>
+    </div>
+
+    <div class="md-card">
+      <h6 class="fw-bold mb-3"><i class="fa-solid fa-list me-2"></i>Daftar Event</h6>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle border-0">
+          <thead class="table-light">
+            <tr>
+              <th>Kode</th>
+              <th>Tanggal</th>
+              <th>Materi / Agenda</th>
+              <th>Unit</th>
+              <th>PIC</th>
+              <th>Metode</th>
+              <th>Status</th>
+              <th class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="evt-table-events-body">
+            <tr><td colspan="8" class="text-center text-muted">Loading ...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: EVENT REPORT & ANALYTICS -->
+  <div id="evt-tab-report" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold m-0 text-dark"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Report & Analytics</h4>
+      <div class="d-flex gap-2">
+        <button id="evt-btn-refresh" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="EventModule.loadReportData()">
+          <i id="evt-icon-refresh" class="fa-solid fa-rotate me-1"></i> Refresh
+        </button>
+        <button id="evt-btn-download-absensi" class="btn btn-success btn-sm rounded-pill px-3" onclick="EventModule.downloadDaftarHadirPDF()">
+          <i class="fa-solid fa-file-signature me-1"></i>Daftar Hadir
+        </button>
+        <button id="evt-btn-download-pdf" class="btn btn-primary btn-sm rounded-pill px-3" onclick="EventModule.downloadReportPDF()">
+          <i class="fa-solid fa-file-pdf me-1"></i>Report
+        </button>
+      </div>
+    </div>
+
+    <!-- EXPORT CONTAINER -->
+    <div id="evt-pdf-export-area" class="p-2 bg-white rounded-3">
+      <div class="md-card mb-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-medium text-secondary">Materi / Agenda</label>
+            <select id="evt-report-select" class="form-select" onchange="EventModule.onReportEventSelect()">
+              <option value="">-- Pilih --</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium text-secondary">Tanggal</label>
+            <input type="text" id="evt-rep-tanggal" class="form-control bg-light" readonly placeholder="-">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium text-secondary">Unit / Lokasi</label>
+            <input type="text" id="evt-rep-unit" class="form-control bg-light" readonly placeholder="-">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium text-secondary">Metode</label>
+            <input type="text" id="evt-rep-metode" class="form-control bg-light" readonly placeholder="-">
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="md-kpi-card">
+            <small class="text-muted text-uppercase fw-bold">Total Peserta</small>
+            <h3 class="fw-bold mb-0 text-primary" id="evt-kpi-peserta">0</h3>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="md-kpi-card" style="border-left-color: #E65100;">
+            <small class="text-muted text-uppercase fw-bold">Rata-rata Pre-Test</small>
+            <h3 class="fw-bold mb-0 text-warning" id="evt-kpi-pretest">0</h3>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="md-kpi-card" style="border-left-color: #2E7D32;">
+            <small class="text-muted text-uppercase fw-bold">Rata-rata Post-Test</small>
+            <h3 class="fw-bold mb-0 text-success" id="evt-kpi-posttest">0</h3>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="md-kpi-card" style="border-left-color: #0288D1;">
+            <small class="text-muted text-uppercase fw-bold">Peningkatan</small>
+            <h3 class="fw-bold mb-0 text-info" id="evt-kpi-delta">+0 Poin</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="md-card mb-4">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-bar me-2"></i>Perbandingan Nilai Pre-Test vs Post-Test</h6>
+        <div style="height: 280px; position: relative;">
+          <canvas id="evt-chartScore"></canvas>
+        </div>
+      </div>
+
+      <div class="md-card">
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-users me-2"></i>Data Peserta</h6>
+        <div id="evt-container-participants" class="row g-3">
+          <div class="col-12 text-center text-muted">Silakan pilih event terlebih dahulu.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL DISPLAY QR CODE (PESERTA) -->
+<div class="modal fade" id="evtQRModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-3 rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark w-100"><i class="fa-solid fa-qrcode me-2 text-primary"></i>QR Code Event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-2 small">Scan QR Code di bawah untuk masuk menu</p>
+        <div class="bg-light p-3 rounded-3 mb-3 border">
+          <h6 class="fw-bold text-primary mb-1" id="qr-modal-materi">-</h6>
+          <small class="text-muted d-block mb-1">Kode: <span id="qr-modal-kode" class="fw-bold">-</span> | Lokasi: <span id="qr-modal-lokasi">-</span></small>
+          <small class="text-break text-secondary font-monospace" style="font-size: 0.75rem;" id="qr-modal-url"></small>
+        </div>
+        <div id="qrcode" class="d-flex justify-content-center my-3"></div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-primary rounded-pill px-4" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Print</button>
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT EVENT -->
+<div class="modal fade" id="evtEditModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 p-2">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Update Event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="evt-editForm" onsubmit="EventModule.handleUpdateEvent(event)">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Kode Event</label>
+            <input type="text" id="evt-edit-kode" class="form-control bg-light fw-bold" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Tanggal Training</label>
+            <input type="date" id="evt-edit-tanggal" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Materi / Agenda</label>
+            <input type="text" id="evt-edit-materi" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Unit / Lokasi</label>
+            <input type="text" id="evt-edit-unit" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">PIC</label>
+            <input type="text" id="evt-edit-pic" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Metode</label>
+            <select id="evt-edit-metode" class="form-select" required>
+              <option value="Onsite">Onsite</option>
+              <option value="Online">Online</option>
+            </select>
+          </div>
+
+          <!-- TOMBOL AKSES MANAJEMEN SOAL (QA) -->
+          <div class="border-top pt-3 mt-3">
+            <button type="button" class="btn btn-outline-success w-100 rounded-pill mb-2" onclick="EventModule.openQAModal()">
+              <i class="fa-solid fa-file-circle-question me-2"></i>Kelola Soal
+            </button>
+          </div>
+
+          <button type="submit" id="evt-btnUpdateSubmit" class="btn btn-primary rounded-pill w-100 mt-2">
+            <i class="fa-solid fa-check me-2"></i>Simpan
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KELOLA SOAL (QA) - FULLSCREEN -->
+<div class="modal fade" id="evtQAModal" tabindex="-1" aria-labelledby="evtQAModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      
+<!-- HEADER MODAL (Material Design Style) -->
+<div class="modal-header border-0 pb-3 pt-4 px-4 align-items-start position-relative" style="background-color: #f8f9fa;">
+  <div class="d-flex align-items-center gap-3 w-100">
+    <!-- Material Icon Container / Avatar -->
+    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
+         style="width: 48px; height: 48px; background-color: #e8f0fe; color: #1a73e8;">
+      <i class="fa-solid fa-list-check fs-5"></i>
+    </div>
+
+    <!-- Title Group (Langsung Judul Materi) -->
+    <div class="flex-grow-1 min-w-0">
+      <h5 class="modal-title fw-semibold text-dark m-0 lh-sm text-truncate" id="qa-materi-title" style="font-size: 1.25rem; letter-spacing: 0.15px;">
+        Materi: -
+      </h5>
+    </div>
+
+    <!-- Material Close Button -->
+    <button type="button" 
+            class="btn-close shadow-none p-2 rounded-circle" 
+            data-bs-dismiss="modal" 
+            aria-label="Close"
+            style="transition: background-color 0.2s; cursor: pointer; opacity: 0.7;">
+    </button>
+  </div>
+</div>
+
+      <!-- BODY MODAL -->
+      <div class="modal-body bg-light">
+        <div class="container-fluid">
+          
+          <!-- PANEL ACTION: UPLOAD EXCEL & TAMBAH SOAL -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <div class="row g-3 align-items-center">
+                
+                <!-- BATCH UPLOAD VIA EXCEL -->
+                <div class="col-lg-6 col-md-12">
+                  <label class="form-label fw-bold text-secondary mb-1">
+                    <i class="fa-solid fa-file-excel me-1 text-success"></i>Upload Soal (.xlsx / .csv)
+                  </label>
+                  <div class="input-group">
+                    <input type="file" id="qa-excel-file" class="form-control" accept=".xlsx, .xls, .csv">
+                    <button class="btn btn-success" type="button" onclick="EventModule.handleUploadExcelQA()">
+                      <i class="fa-solid fa-file-import me-1"></i>Import
+                    </button>
+                  </div>
+                </div>
+
+                <!-- ACTION BUTTONS: DOWNLOAD TEMPLATE & TAMBAH MANUAL -->
+                <div class="col-lg-6 col-md-12 text-lg-end pt-3 pt-lg-0">
+                  <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
+                    <button class="btn btn-outline-success" type="button" onclick="EventModule.downloadTemplateExcelQA()">
+                      <i class="fa-solid fa-download me-1"></i>Template Excel
+                    </button>
+                    <button class="btn btn-primary" type="button" onclick="EventModule.openFormSoalModal()">
+                      <i class="fa-solid fa-plus me-1"></i>Tambah Soal
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- TABEL DAFTAR SOAL -->
+          <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+              <h6 class="m-0 fw-bold text-primary">
+                <i class="fa-solid fa-table me-2"></i>Daftar Soal & Kunci Jawaban
+              </h6>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th class="text-center" style="width: 50px;">No</th>
+                      <th style="min-width: 250px;">Pertanyaan / Soal</th>
+                      <th style="min-width: 130px;">A</th>
+                      <th style="min-width: 130px;">B</th>
+                      <th style="min-width: 130px;">C</th>
+                      <th style="min-width: 130px;">D</th>
+                      <th style="min-width: 150px;">Jawaban</th>
+                      <th class="text-center" style="width: 100px;">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="qa-table-body">
+                    <tr>
+                      <td colspan="8" class="text-center text-muted py-4">Memuat data soal...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORM INPUT/EDIT SOAL -->
+<div class="modal fade" id="evtFormSoalModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 p-2">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="qa-form-title">Tambah Soal</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="qa-form" onsubmit="EventModule.handleSaveSoal(event)">
+          <input type="hidden" id="qa-edit-index">
+          <div class="mb-2">
+            <label class="form-label fw-medium">Soal</label>
+            <textarea id="qa-input-soal" class="form-control" rows="2" required></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-medium">Opsi 1</label>
+            <input type="text" id="qa-input-o1" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-medium">Opsi 2</label>
+            <input type="text" id="qa-input-o2" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-medium">Opsi 3</label>
+            <input type="text" id="qa-input-o3" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-medium">Opsi 4</label>
+            <input type="text" id="qa-input-o4" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Jawaban Benar</label>
+            <input type="text" id="qa-input-jawaban" class="form-control" placeholder="Isikan persis sesuai opsi" required>
+          </div>
+          <button type="submit" class="btn btn-success w-100 rounded-pill">Simpan Soal</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUCCESS -->
+<div class="modal fade" id="evtSuccessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-3 rounded-4">
+      <div class="modal-body">
+        <i class="fa-solid fa-circle-check text-success fa-4x mb-3"></i>
+        <h4 class="fw-bold">Berhasil!</h4>
+        <p class="text-muted" id="evtModalMessage">Operasi berhasil diperbarui.</p>
+        <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  // ==========================================
+  // MD NOTIFICATION HELPERS (pengganti alert/confirm bawaan browser)
+  // ==========================================
+  const MD_TOAST_ICONS = {
+    error: 'fa-solid fa-circle-exclamation',
+    success: 'fa-solid fa-circle-check',
+    warning: 'fa-solid fa-triangle-exclamation',
+    info: 'fa-solid fa-circle-info'
+  };
+
+  function mdToast(message, type = 'info', duration = 4200) {
+    const container = document.getElementById('mdSnackbarContainer');
+    if (!container) { console.warn(message); return; }
+
+    const el = document.createElement('div');
+    el.className = `md-snackbar type-${type}`;
+    el.innerHTML = `
+      <span class="md-snackbar-icon"><i class="${MD_TOAST_ICONS[type] || MD_TOAST_ICONS.info}"></i></span>
+      <span class="md-snackbar-msg"></span>
+      <button type="button" class="md-snackbar-close" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+    `;
+    el.querySelector('.md-snackbar-msg').textContent = message;
+
+    const dismiss = () => {
+      el.classList.add('hide');
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 220);
+    };
+
+    el.querySelector('.md-snackbar-close').addEventListener('click', dismiss);
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+
+    if (duration > 0) setTimeout(dismiss, duration);
+    return dismiss;
+  }
+
+  function mdConfirm(message, opts = {}) {
+    const {
+      title = 'Konfirmasi',
+      okText = 'Ya, Lanjutkan',
+      cancelText = 'Batal',
+      danger = false
+    } = opts;
+
+    return new Promise((resolve) => {
+      const modalEl = document.getElementById('mdConfirmModal');
+      const iconEl = document.getElementById('mdConfirmIcon');
+      const titleEl = document.getElementById('mdConfirmTitle');
+      const msgEl = document.getElementById('mdConfirmMessage');
+      const okBtn = document.getElementById('mdConfirmOkBtn');
+      const cancelBtn = document.getElementById('mdConfirmCancelBtn');
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      okBtn.textContent = okText;
+      cancelBtn.textContent = cancelText;
+
+      iconEl.className = 'md-confirm-icon ' + (danger ? 'danger' : 'default');
+      iconEl.innerHTML = danger
+        ? '<i class="fa-solid fa-trash"></i>'
+        : '<i class="fa-solid fa-circle-question"></i>';
+      okBtn.className = 'btn rounded-pill px-4 ' + (danger ? 'btn-danger' : 'btn-primary');
+
+      const modal = new bootstrap.Modal(modalEl);
+      let decided = false;
+
+      const cleanup = () => {
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+        modalEl.removeEventListener('hidden.bs.modal', onHidden);
+      };
+      const onOk = () => { decided = true; cleanup(); modal.hide(); resolve(true); };
+      const onCancel = () => { decided = true; cleanup(); modal.hide(); resolve(false); };
+      const onHidden = () => { if (!decided) { cleanup(); resolve(false); } };
+
+      okBtn.addEventListener('click', onOk);
+      cancelBtn.addEventListener('click', onCancel);
+      modalEl.addEventListener('hidden.bs.modal', onHidden);
+
+      modal.show();
+    });
+  }
+
+  const EventModule = {
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwI8rJuSSbCmW4DQCNg8-JA624FXkiIUu1I6oUBUzKyfDyF8uq04mLO1IfbBAE3XzoEFA/exec",
+    map: null,
+    marker: null,
+    dataJadwal: [],
+    allEventsCache: [],
+    currentReportData: null,
+    currentQuestions: [],
+    chartInstance: null,
+    qrCodeInstance: null,
+
+    init: function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('evt-tanggal').value = today;
+      this.initMap();
+      this.fetchJadwalHariIni();
+      this.generateUniqueCode();
+    },
+
+    toProperCase: function(str) {
+      if (!str) return '';
+      return str.toLowerCase().replace(/(?:^|\s)\w/g, function(match) {
+        return match.toUpperCase();
+      });
+    },
+
+    switchTab: function(tabName) {
+      document.querySelectorAll('.md-navbar .nav-link').forEach(a => a.classList.remove('active'));
+      document.getElementById('evt-tab-gen').classList.add('d-none');
+      document.getElementById('evt-tab-add').classList.add('d-none');
+      document.getElementById('evt-tab-report').classList.add('d-none');
+
+      document.getElementById(`evt-nav-${tabName}`).classList.add('active');
+      document.getElementById(`evt-tab-${tabName}`).classList.remove('d-none');
+
+      if (tabName === 'add') this.fetchEventsTable();
+      else if (tabName === 'report') this.fetchReportEvents();
+    },
+
+    generateUniqueCode: function() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 10; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+      document.getElementById('evt-add-kode').value = result;
+    },
+
+    fetchJadwalHariIni: function() {
+      const today = document.getElementById('evt-tanggal').value;
+      fetch(`${this.APPS_SCRIPT_URL}?action=getJadwalToday&tanggal=${today}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === 'success') this.populateKodeOptions(res.data);
+        });
+    },
+
+    populateKodeOptions: function(options) {
+      const select = document.getElementById('evt-kodeTraining');
+      this.dataJadwal = options;
+      select.innerHTML = '<option value="">-- Pilih --</option>';
+      options.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.kode;
+        opt.textContent = `[${item.kode}] - ${item.materi}`;
+        select.appendChild(opt);
+      });
+    },
+
+    autofillData: function() {
+      const selectedKode = document.getElementById('evt-kodeTraining').value;
+      const item = this.dataJadwal.find(d => d.kode === selectedKode);
+      document.getElementById('evt-materi').value = item ? item.materi : '';
+      document.getElementById('evt-lokasi').value = item ? item.lokasi : '';
+    },
+
+    handleGenerateQR: function(e) {
+      e.preventDefault();
+      const kode = document.getElementById('evt-kodeTraining').value;
+      const materi = document.getElementById('evt-materi').value;
+      const lokasi = document.getElementById('evt-lokasi').value;
+      const gps = document.getElementById('evt-gps').value;
+
+      if (!kode) {
+        mdToast("Silakan pilih Kode Event terlebih dahulu.", 'warning');
+        return;
+      }
+
+      const targetUrl = `https://trn-hrgajsmu.netlify.app/${kode}/${gps.trim()}`;
+
+      document.getElementById('qr-modal-kode').innerText = kode;
+      document.getElementById('qr-modal-materi').innerText = materi;
+      document.getElementById('qr-modal-lokasi').innerText = lokasi;
+      document.getElementById('qr-modal-url').innerText = targetUrl;
+
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+
+      this.qrCodeInstance = new QRCode(qrContainer, {
+        text: targetUrl,
+        width: 230,
+        height: 230,
+        colorDark : "#1C1B1F",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+
+      new bootstrap.Modal(document.getElementById('evtQRModal')).show();
+    },
+
+    handleAddEvent: function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('evt-btnSaveEvent');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner spin-icon me-2"></i>Menyimpan...';
+
+      const payload = {
+        actionType: 'addEvent',
+        kode: document.getElementById('evt-add-kode').value,
+        tanggal: document.getElementById('evt-add-tanggal').value,
+        materi: document.getElementById('evt-add-materi').value,
+        unit: document.getElementById('evt-add-unit').value,
+        pic: document.getElementById('evt-add-pic').value,
+        metode: document.getElementById('evt-add-metode').value
+      };
+
+      fetch(this.APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Simpan Event ke Sheet';
+        if (res.status === 'success') {
+          document.getElementById('evtModalMessage').innerText = "Event baru berhasil disimpan!";
+          new bootstrap.Modal(document.getElementById('evtSuccessModal')).show();
+          document.getElementById('evt-addEventForm').reset();
+          this.generateUniqueCode();
+          this.fetchEventsTable();
+        } else mdToast('Gagal: ' + res.message, 'error');
+      });
+    },
+
+    fetchEventsTable: function() {
+      const tbody = document.getElementById('evt-table-events-body');
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Loading ...</td></tr>';
+
+      fetch(`${this.APPS_SCRIPT_URL}?action=getAllEvents`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === 'success') {
+            this.allEventsCache = res.data;
+            tbody.innerHTML = '';
+            if (res.data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Belum ada event tersimpan.</td></tr>';
+              return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            res.data.forEach(item => {
+              const tr = document.createElement('tr');
+              let statusBadge = '<span class="badge bg-success">Aktif</span>';
+
+              const rawDateStr = item.rawDateISO || item.tanggal || item.tanggalFormatted;
+
+              if (rawDateStr) {
+                const eventDate = new Date(rawDateStr);
+                eventDate.setHours(0, 0, 0, 0);
+
+                if (!isNaN(eventDate.getTime()) && eventDate < today) {
+                  statusBadge = '<span class="badge bg-secondary">Sudah Lewat</span>';
+                }
+              }
+
+              tr.innerHTML = `
+                <td class="fw-bold">${item.kode}</td>
+                <td>${item.tanggalFormatted || item.tanggal}</td>
+                <td>${item.materi}</td>
+                <td>${item.unit}</td>
+                <td>${item.pic}</td>
+                <td><span class="badge ${item.metode === 'Online' ? 'bg-info' : 'bg-primary'}">${item.metode}</span></td>
+                <td>${statusBadge}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-primary rounded-circle me-1" onclick="EventModule.openEditModal('${item.kode}')" title="Edit Event">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-circle" onclick="EventModule.handleDeleteEvent('${item.kode}')" title="Hapus Event">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+        });
+    },
+
+    openEditModal: function(kode) {
+      const eventObj = this.allEventsCache.find(e => e.kode === kode);
+      if (!eventObj) return;
+
+      document.getElementById('evt-edit-kode').value = eventObj.kode;
+      document.getElementById('evt-edit-tanggal').value = eventObj.rawDateISO ? eventObj.rawDateISO.split('T')[0] : '';
+      document.getElementById('evt-edit-materi').value = eventObj.materi;
+      document.getElementById('evt-edit-unit').value = eventObj.unit;
+      document.getElementById('evt-edit-pic').value = eventObj.pic;
+      document.getElementById('evt-edit-metode').value = eventObj.metode;
+
+      new bootstrap.Modal(document.getElementById('evtEditModal')).show();
+    },
+
+    handleUpdateEvent: function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('evt-btnUpdateSubmit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner spin-icon me-2"></i>Updating...';
+
+      const payload = {
+        actionType: 'updateEvent',
+        kode: document.getElementById('evt-edit-kode').value,
+        tanggal: document.getElementById('evt-edit-tanggal').value,
+        materi: document.getElementById('evt-edit-materi').value,
+        unit: document.getElementById('evt-edit-unit').value,
+        pic: document.getElementById('evt-edit-pic').value,
+        metode: document.getElementById('evt-edit-metode').value
+      };
+
+      fetch(this.APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check me-2"></i>Simpan Perubahan';
+        
+        const modalEl = document.getElementById('evtEditModal');
+        bootstrap.Modal.getInstance(modalEl).hide();
+
+        if (res.status === 'success') {
+          document.getElementById('evtModalMessage').innerText = "Data event berhasil diperbarui!";
+          new bootstrap.Modal(document.getElementById('evtSuccessModal')).show();
+          this.fetchEventsTable();
+        } else mdToast('Gagal: ' + res.message, 'error');
+      });
+    },
+
+    handleDeleteEvent: async function(kode) {
+      const ok = await mdConfirm(
+        `Yakin ingin menghapus event "${kode}"? Data soal terkait tidak ikut terhapus.`,
+        { title: 'Hapus Event', okText: 'Ya, Hapus', danger: true }
+      );
+      if (!ok) return;
+
+      try {
+        const res = await fetch(this.APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ actionType: 'deleteEvent', kode: kode })
+        });
+        const result = await res.json();
+
+        if (result.status === 'success') {
+          document.getElementById('evtModalMessage').innerText = "Event berhasil dihapus!";
+          new bootstrap.Modal(document.getElementById('evtSuccessModal')).show();
+          this.fetchEventsTable();
+        } else {
+          mdToast('Gagal menghapus event: ' + result.message, 'error');
+        }
+      } catch (err) {
+        mdToast('Terjadi kesalahan: ' + err.message, 'error');
+      }
+    },
+
+    // ==========================================
+    // MANAJEMEN SOAL / QA (SOAL & JAWABAN)
+    // ==========================================
+    openQAModal: function() {
+      const materi = document.getElementById('evt-edit-materi').value;
+      if (!materi) {
+        mdToast("Materi belum terisi.", 'warning');
+        return;
+      }
+      document.getElementById('qa-materi-title').innerText = materi;
+      const modalQA = new bootstrap.Modal(document.getElementById('evtQAModal'));
+      modalQA.show();
+      this.loadQuestions(materi);
+    },
+
+    downloadTemplateExcelQA: function() {
+      const materi = document.getElementById('evt-edit-materi')?.value || "Materi";
+      
+      const templateData = [
+        {
+          "Soal": "Apa kepanjangan dari K3?",
+          "Opsi 1": "Keselamatan dan Kesehatan Kerja",
+          "Opsi 2": "Keamanan dan Kesehatan Kerja",
+          "Opsi 3": "Keselamatan dan Ketertiban Kerja",
+          "Opsi 4": "Kerapihan dan Kesehatan Kerja",
+          "Jawaban Benar": "Keselamatan dan Kesehatan Kerja"
+        },
+        {
+          "Soal": "Sebutkan warna helm kerja untuk Petugas Safety/HSE!",
+          "Opsi 1": "Kuning",
+          "Opsi 2": "Biru",
+          "Opsi 3": "Hijau",
+          "Opsi 4": "Merah",
+          "Jawaban Benar": "Hijau"
+        }
+      ];
+
+      const ws = XLSX.utils.json_to_sheet(templateData, {
+        header: ["Soal", "Opsi 1", "Opsi 2", "Opsi 3", "Opsi 4", "Jawaban Benar"]
+      });
+
+      ws['!cols'] = [
+        { wch: 40 }, { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 30 }
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Template QA");
+
+      const cleanMateriName = materi.replace(/[^a-zA-Z0-9_-]/g, '_');
+      XLSX.writeFile(wb, `Template_Soal_${cleanMateriName}.xlsx`);
+    },
+
+    loadQuestions: async function(materi) {
+      const tbody = document.getElementById('qa-table-body');
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center">Memuat soal...</td></tr>';
+
+      try {
+        const res = await fetch(`${this.APPS_SCRIPT_URL}?action=getQuestionsByMateri&materi=${encodeURIComponent(materi)}`);
+        const json = await res.json();
+        
+        if (json.status === 'success') {
+          this.currentQuestions = json.data;
+          this.renderQuestionTable(json.data);
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Gagal memuat data soal</td></tr>';
+      }
+    },
+
+    renderQuestionTable: function(list) {
+      const tbody = document.getElementById('qa-table-body');
+      if (!list || list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Belum ada soal untuk materi ini.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      list.forEach((q, i) => {
+        html += `
+          <tr>
+            <td class="text-center">${i + 1}</td>
+            <td>${q.soal}</td>
+            <td>${q.opsi1}</td>
+            <td>${q.opsi2}</td>
+            <td>${q.opsi3}</td>
+            <td>${q.opsi4}</td>
+            <td class="fw-bold text-success">${q.jawaban}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-warning rounded-circle me-1" onclick="EventModule.openFormSoalModal(${i})" title="Edit Soal"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-sm btn-outline-danger rounded-circle" onclick="EventModule.handleDeleteSoal(${q.rowIndex})" title="Hapus Soal"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    },
+
+    handleUploadExcelQA: function() {
+      const fileInput = document.getElementById('qa-excel-file');
+      const materi = document.getElementById('evt-edit-materi').value;
+      const file = fileInput.files[0];
+
+      if (!file) {
+        mdToast("Pilih file Excel/CSV terlebih dahulu.", 'warning');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+
+        const questions = json.map(row => ({
+          materi: materi,
+          soal: row['Soal'] || row['soal'] || '',
+          opsi1: row['Opsi 1'] || row['opsi1'] || '',
+          opsi2: row['Opsi 2'] || row['opsi2'] || '',
+          opsi3: row['Opsi 3'] || row['opsi3'] || '',
+          opsi4: row['Opsi 4'] || row['opsi4'] || '',
+          jawaban: row['Jawaban Benar'] || row['jawaban'] || ''
+        }));
+
+        const res = await fetch(this.APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ actionType: 'bulkAddQuestions', questions: questions })
+        });
+        const result = await res.json();
+        
+        if (result.status === 'success') {
+          mdToast("Berhasil mengimpor " + questions.length + " soal!", 'success');
+          fileInput.value = '';
+          EventModule.loadQuestions(materi);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    },
+
+    openFormSoalModal: function(index = null) {
+      const form = document.getElementById('qa-form');
+      form.reset();
+
+      if (index !== null && this.currentQuestions[index]) {
+        const q = this.currentQuestions[index];
+        document.getElementById('qa-edit-index').value = q.rowIndex;
+        document.getElementById('qa-input-soal').value = q.soal;
+        document.getElementById('qa-input-o1').value = q.opsi1;
+        document.getElementById('qa-input-o2').value = q.opsi2;
+        document.getElementById('qa-input-o3').value = q.opsi3;
+        document.getElementById('qa-input-o4').value = q.opsi4;
+        document.getElementById('qa-input-jawaban').value = q.jawaban;
+        document.getElementById('qa-form-title').innerText = "Edit Soal";
+      } else {
+        document.getElementById('qa-edit-index').value = '';
+        document.getElementById('qa-form-title').innerText = "Tambah Soal Manual";
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('evtFormSoalModal'));
+      modal.show();
+    },
+
+    handleSaveSoal: async function(e) {
+      e.preventDefault();
+      const materi = document.getElementById('evt-edit-materi').value;
+      const rowIndex = document.getElementById('qa-edit-index').value;
+
+      const payload = {
+        actionType: rowIndex ? 'updateQuestion' : 'addQuestion',
+        rowIndex: rowIndex ? parseInt(rowIndex) : null,
+        materi: materi,
+        soal: document.getElementById('qa-input-soal').value,
+        opsi1: document.getElementById('qa-input-o1').value,
+        opsi2: document.getElementById('qa-input-o2').value,
+        opsi3: document.getElementById('qa-input-o3').value,
+        opsi4: document.getElementById('qa-input-o4').value,
+        jawaban: document.getElementById('qa-input-jawaban').value
+      };
+
+      const res = await fetch(this.APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+
+      if (result.status === 'success') {
+        const modalEl = document.getElementById('evtFormSoalModal');
+        bootstrap.Modal.getInstance(modalEl).hide();
+        EventModule.loadQuestions(materi);
+      } else {
+        mdToast("Gagal menyimpan soal: " + result.message, 'error');
+      }
+    },
+
+    handleDeleteSoal: async function(rowIndex) {
+      const ok = await mdConfirm("Yakin ingin menghapus soal ini?", { title: 'Hapus Soal', okText: 'Ya, Hapus', danger: true });
+      if (!ok) return;
+      const materi = document.getElementById('evt-edit-materi').value;
+
+      const res = await fetch(this.APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ actionType: 'deleteQuestion', rowIndex: rowIndex })
+      });
+      const result = await res.json();
+
+      if (result.status === 'success') {
+        EventModule.loadQuestions(materi);
+      } else {
+        mdToast("Gagal menghapus soal: " + result.message, 'error');
+      }
+    },
+
+    fetchReportEvents: function() {
+      fetch(`${this.APPS_SCRIPT_URL}?action=getAllEvents`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === 'success') {
+            this.allEventsCache = res.data;
+            const select = document.getElementById('evt-report-select');
+            select.innerHTML = '<option value="">-- Pilih Event --</option>';
+            res.data.forEach(item => {
+              const opt = document.createElement('option');
+              opt.value = item.kode;
+              opt.textContent = `[${item.kode}] - ${item.materi}`;
+              select.appendChild(opt);
+            });
+          }
+        });
+    },
+
+    onReportEventSelect: function() {
+      const selectedKode = document.getElementById('evt-report-select').value;
+      const eventObj = this.allEventsCache.find(e => e.kode === selectedKode);
+
+      if (eventObj) {
+        document.getElementById('evt-rep-tanggal').value = eventObj.tanggalFormatted || '-';
+        document.getElementById('evt-rep-unit').value = eventObj.unit || '-';
+        document.getElementById('evt-rep-metode').value = eventObj.metode || '-';
+        this.loadReportData();
+      } else {
+        document.getElementById('evt-rep-tanggal').value = '-';
+        document.getElementById('evt-rep-unit').value = '-';
+        document.getElementById('evt-rep-metode').value = '-';
+        this.clearReportUI();
+      }
+    },
+
+    clearReportUI: function() {
+      this.currentReportData = null;
+      document.getElementById('evt-kpi-peserta').innerText = '0';
+      document.getElementById('evt-kpi-pretest').innerText = '0';
+      document.getElementById('evt-kpi-posttest').innerText = '0';
+      document.getElementById('evt-kpi-delta').innerText = '+0 Poin';
+      document.getElementById('evt-container-participants').innerHTML = '<div class="col-12 text-center text-muted">Silakan pilih event terlebih dahulu.</div>';
+      if (this.chartInstance) {
+        this.chartInstance.destroy();
+        this.chartInstance = null;
+      }
+    },
+
+    loadReportData: function() {
+      const kode = document.getElementById('evt-report-select').value;
+      if (!kode) return;
+
+      const icon = document.getElementById('evt-icon-refresh');
+      if (icon) icon.classList.add('spin-icon');
+
+      fetch(`${this.APPS_SCRIPT_URL}?action=getReportData&kode=${kode}`)
+        .then(res => res.json())
+        .then(res => {
+          if (icon) icon.classList.remove('spin-icon');
+          if (res.status === 'success') {
+            this.currentReportData = res.data;
+            this.renderReportUI(res.data);
+          }
+        })
+        .catch(() => { if (icon) icon.classList.remove('spin-icon'); });
+    },
+
+    renderReportUI: function(data) {
+      document.getElementById('evt-kpi-peserta').innerText = data.totalPeserta;
+      document.getElementById('evt-kpi-pretest').innerText = data.avgPre;
+      document.getElementById('evt-kpi-posttest').innerText = data.avgPost;
+      
+      const delta = (data.avgPost - data.avgPre).toFixed(2);
+      document.getElementById('evt-kpi-delta').innerText = (delta >= 0 ? `+${delta}` : delta) + " Poin";
+
+      const container = document.getElementById('evt-container-participants');
+      container.innerHTML = '';
+
+      if (data.participants.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted">Belum ada respon data peserta.</div>';
+        if (this.chartInstance) this.chartInstance.destroy();
+      } else {
+        const sortedParticipants = [...data.participants].sort((a, b) => a.postScore - b.postScore);
+        const names = [], preScores = [], postScores = [];
+
+        sortedParticipants.forEach((p, idx) => {
+          const properName = this.toProperCase(p.nama);
+          const properJabatan = this.toProperCase(p.jabatan);
+
+          names.push(properName);
+          preScores.push(p.preScore);
+          postScores.push(p.postScore);
+
+          const diff = (p.postScore - p.preScore).toFixed(2);
+          
+          const col = document.createElement('div');
+          col.className = 'col-md-6';
+          col.innerHTML = `
+            <div class="md-card-participant d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">${idx + 1}. ${properName}</div>
+                <small class="text-muted"><i class="fa-solid fa-briefcase me-1"></i>${properJabatan}</small>
+              </div>
+              <div class="text-end">
+                <div>
+                  <span class="badge bg-warning text-dark me-1">Pre: ${p.preScore}</span>
+                  <span class="badge bg-success">Post: ${p.postScore}</span>
+                </div>
+                <small class="${diff >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold'} mt-1 d-block">
+                  ${diff >= 0 ? '+' + diff : diff} Poin
+                </small>
+              </div>
+            </div>
+          `;
+          container.appendChild(col);
+        });
+
+        this.renderChart(names, preScores, postScores);
+      }
+    },
+
+    renderChart: function(labels, preData, postData) {
+      const ctx = document.getElementById('evt-chartScore').getContext('2d');
+      if (this.chartInstance) this.chartInstance.destroy();
+
+      this.chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Pre-Test', data: preData, backgroundColor: 'rgba(230, 81, 0, 0.75)' },
+            { label: 'Post-Test', data: postData, backgroundColor: 'rgba(46, 125, 50, 0.75)' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+    },
+
+    downloadReportPDF: async function() {
+      const selectedKode = document.getElementById('evt-report-select').value;
+      if (!selectedKode) {
+        mdToast("Pilih event terlebih dahulu untuk mendownload laporan PDF.", 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('evt-btn-download-pdf');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner spin-icon me-1"></i> Preparing PDF...';
+
+      const element = document.getElementById('evt-pdf-export-area');
+      const mapEl = document.getElementById('evt-map');
+      const originalMapDisplay = mapEl ? mapEl.style.display : '';
+      if (mapEl) mapEl.style.display = 'none';
+
+      element.classList.add('pdf-capture-fix');
+
+      try {
+        await new Promise(r => setTimeout(r, 300));
+
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          scrollY: 0,
+          scrollX: 0
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: 'in', format: 'a4', orientation: 'portrait' });
+
+        const pageWidth = pdf.internal.pageSize.getWidth() - 0.6;
+        const pageHeight = pdf.internal.pageSize.getHeight() - 0.6;
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0.3;
+
+        pdf.addImage(imgData, 'JPEG', 0.3, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight + 0.3;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0.3, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`Event_Report_${selectedKode}.pdf`);
+      } catch (err) {
+        console.error("PDF Export Error:", err);
+        mdToast("Gagal mengunduh PDF: " + err.message, 'error');
+      } finally {
+        element.classList.remove('pdf-capture-fix');
+        if (mapEl) mapEl.style.display = originalMapDisplay;
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    },
+
+    downloadDaftarHadirPDF: async function() {
+      const selectedKode = document.getElementById('evt-report-select').value;
+      if (!selectedKode || !this.currentReportData) {
+        mdToast("Pilih event dan pastikan data report terisi terlebih dahulu.", 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('evt-btn-download-absensi');
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner spin-icon me-1"></i> Generating PDF...';
+      }
+
+      const eventObj = this.allEventsCache.find(e => e.kode === selectedKode) || {};
+      const participants = this.currentReportData.participants || [];
+
+      const formatTtdUrl = (url) => {
+        if (!url) return '';
+        if (url.includes('drive.google.com')) {
+          const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (match && match[1]) {
+            return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+          }
+        }
+        return url;
+      };
+
+      const printArea = document.createElement('div');
+      printArea.style.padding = '30px';
+      printArea.style.background = '#ffffff';
+      printArea.style.fontFamily = 'Arial, sans-serif';
+      printArea.style.width = '800px';
+      printArea.style.position = 'absolute';
+      printArea.style.top = '-9999px';
+
+      let tableRows = '';
+      participants.forEach((p, index) => {
+        const rawTtd = p.ttd || p.TTD || '';
+        const imgUrl = formatTtdUrl(rawTtd);
+
+        const ttdImageHtml = imgUrl 
+          ? `<img src="${imgUrl}" style="max-height: 45px; max-width: 120px; object-fit: contain;" crossOrigin="anonymous">`
+          : '<span style="color:#aaa; font-style:italic;">-</span>';
+
+        tableRows += `
+          <tr>
+            <td style="border: 1px solid #333; padding: 8px; text-align: center;">${index + 1}</td>
+            <td style="border: 1px solid #333; padding: 8px;"><b>${this.toProperCase(p.nama)}</b></td>
+            <td style="border: 1px solid #333; padding: 8px;">${this.toProperCase(p.jabatan)}</td>
+            <td style="border: 1px solid #333; padding: 8px;">${(p.keterangan || p.asalPT || p.status || '').toLowerCase() === 'karyawan' ? '' : (p.keterangan || p.asalPT || p.status || '')}</td>
+            <td style="border: 1px solid #333; padding: 8px; text-align: center; vertical-align: middle;">${ttdImageHtml}</td>
+          </tr>
+        `;
+      });
+
+      printArea.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+          <h2 style="margin: 0; text-transform: uppercase; font-size: 18pt;">DAFTAR HADIR</h2>
+          <h3 style="margin: 5px 0 0 0; color: #444; font-size: 14pt;">${eventObj.materi || '-'}</h3>
+        </div>
+
+        <table style="width: 100%; margin-bottom: 20px; font-size: 10pt; line-height: 1.6;">
+          <tr>
+            <td style="width: 15%; font-weight: bold;">Tanggal</td>
+            <td style="width: 2%;">:</td>
+            <td style="width: 33%;">${eventObj.tanggalFormatted || eventObj.tanggal || '-'}</td>
+            <td style="width: 15%; font-weight: bold;">Lokasi / Unit</td>
+            <td style="width: 2%;">:</td>
+            <td style="width: 33%;">${eventObj.unit || '-'}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">Kode Event</td>
+            <td>:</td>
+            <td>${selectedKode}</td>
+            <td style="font-weight: bold;">Metode</td>
+            <td>:</td>
+            <td>${eventObj.metode || '-'}</td>
+          </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+          <thead>
+            <tr style="background-color: #f2f2f2; text-align: center;">
+              <th style="border: 1px solid #333; padding: 8px; width: 5%;">No</th>
+              <th style="border: 1px solid #333; padding: 8px; width: 30%;">Nama Peserta</th>
+              <th style="border: 1px solid #333; padding: 8px; width: 25%;">Jabatan</th>
+              <th style="border: 1px solid #333; padding: 8px; width: 20%;">Keterangan</th>
+              <th style="border: 1px solid #333; padding: 8px; width: 20%;">Tanda Tangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows || '<tr><td colspan="5" style="border:1px solid #333; padding:15px; text-align:center;">Tidak ada data peserta</td></tr>'}
+          </tbody>
+        </table>
+      `;
+
+      document.body.appendChild(printArea);
+
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      try {
+        const canvas = await html2canvas(printArea, { 
+          scale: 2, 
+          useCORS: true, 
+          allowTaint: true 
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: 'in', format: 'a4', orientation: 'portrait' });
+
+        const pageWidth = pdf.internal.pageSize.getWidth() - 0.6;
+        const pageHeight = pdf.internal.pageSize.getHeight() - 0.6;
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0.3;
+
+        pdf.addImage(imgData, 'JPEG', 0.3, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight + 0.3;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0.3, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`Daftar_Hadir_${selectedKode}.pdf`);
+      } catch (err) {
+        console.error("PDF Export Error:", err);
+        mdToast("Gagal mengunduh Daftar Hadir PDF: " + err.message, 'error');
+      } finally {
+        document.body.removeChild(printArea);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    },
+
+    initMap: function() {
+      const defaultLat = -6.200000, defaultLng = 106.816666;
+      this.map = L.map('evt-map').setView([defaultLat, defaultLng], 13);
+      
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+        maxZoom: 19,
+        crossOrigin: true
+      }).addTo(this.map);
+      
+      this.marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(this.map);
+
+      this.marker.on('dragend', () => this.updateGpsInput(this.marker.getLatLng().lat, this.marker.getLatLng().lng));
+      this.map.on('click', (e) => {
+        this.marker.setLatLng(e.latlng);
+        this.updateGpsInput(e.latlng.lat, e.latlng.lng);
+      });
+      this.updateGpsInput(defaultLat, defaultLng);
+    },
+
+    updateGpsInput: function(lat, lng) {
+      const gpsInput = document.getElementById('evt-gps');
+      if (gpsInput) gpsInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    },
+
+    getCurrentLocation: function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const lat = pos.coords.latitude, lng = pos.coords.longitude;
+          this.marker.setLatLng([lat, lng]);
+          this.map.setView([lat, lng], 16);
+          this.updateGpsInput(lat, lng);
+        });
+      }
+    }
+  };
+
+  window.addEventListener('DOMContentLoaded', () => EventModule.init());
+</script>
+</body>
+</html>
